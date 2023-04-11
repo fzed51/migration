@@ -70,6 +70,12 @@ class CreateMigration
                 $list[$provider] = $providerPath;
             }
         }
+        if (count($list) === 0) {
+            echo " Attention aucun répertoire n'existe pour le provider "
+                . $this->config->provider.
+                " dans le repertoire "
+                .$this->config->migration_directory;
+        }
         return $list;
     }
 
