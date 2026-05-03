@@ -25,6 +25,9 @@ class MigrationConfigFile extends MigrationConfig
      */
     private $config;
 
+    /** @var string chemin absolu réel du fichier de configuration */
+    private string $configFilename;
+
     /**
      * MigrationConfigFile constructor.
      * @param string $config_filename
@@ -35,6 +38,7 @@ class MigrationConfigFile extends MigrationConfig
         if (!is_file($config_filename)) {
             throw new RuntimeException("le fichier $config_filename n'a pas été trouvé.");
         }
+        $this->configFilename = (string)realpath($config_filename);
         $this->config = json_decode(file_get_contents($config_filename), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             $errorMsg = json_last_error_msg();
@@ -76,9 +80,30 @@ class MigrationConfigFile extends MigrationConfig
     private function initExternPhp(): void
     {
         $configExtern = $this->config['config_extern'];
+        $file = (string)($configExtern['file'] ?? '');
+
+        if (pathinfo($file, PATHINFO_EXTENSION) !== 'php') {
+            throw new RuntimeException(
+                "Le fichier de configuration externe doit avoir l'extension .php."
+            );
+        }
+
+        $configDir = dirname($this->configFilename);
+        $resolvedFile = realpath($file);
+
+        if ($resolvedFile === false) {
+            throw new RuntimeException("Le fichier externe '{$file}' est introuvable.");
+        }
+
+        if (!str_starts_with($resolvedFile, $configDir . DIRECTORY_SEPARATOR)) {
+            throw new RuntimeException(
+                "Le fichier externe doit être dans le répertoire du projet ({$configDir})."
+            );
+        }
+
         try {
             /** @noinspection PhpIncludeInspection */
-            $config = require (string)$configExtern['file'];
+            $config = require $resolvedFile;
         } catch (Throwable $t) {
             throw new RuntimeException("le fichier externe n'est pas interprétable");
         }
