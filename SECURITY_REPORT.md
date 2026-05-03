@@ -21,7 +21,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | Création de répertoires | `src/CreateProviderDirectory.php` |
 | Initialisation | `src/MigrationInit.php` |
 
-**11 failles ou faiblesses** identifiées, dont **1 déjà corrigée**.
+**11 failles ou faiblesses** identifiées, dont **2 déjà corrigées**.
 
 ---
 
@@ -30,7 +30,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | ID | Sévérité | Statut | Titre | Fichier |
 |---|---|---|---|---|
 | SEC-01 | ~~CRITIQUE~~ | ✅ CORRIGÉ | Exécution PHP arbitraire via `config_extern.file` | `MigrationConfigFile.php` |
-| SEC-02 | **ÉLEVÉ** | 🔴 OUVERT | Path traversal via provider non validé | `MigrationCore.php` |
+| SEC-02 | **ÉLEVÉ** | ✅ CORRIGÉ | Path traversal via provider non validé | `MigrationCore.php` |
 | SEC-03 | **ÉLEVÉ** | 🔴 OUVERT | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
 | SEC-04 | MOYEN | 🟡 OUVERT | SHA1 cryptographiquement cassé | `MigrationCore.php` |
 | SEC-05 | MOYEN | 🟡 OUVERT | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
@@ -103,7 +103,7 @@ if (!str_starts_with($resolvedFile, $configDir . DIRECTORY_SEPARATOR)) {
 
 ---
 
-### 🔴 SEC-02 — Path traversal via provider non validé
+### ✅ SEC-02 — Path traversal via provider non validé [CORRIGÉ]
 
 **Sévérité** : ÉLEVÉ  
 **CWE** : CWE-22 — Path Traversal  
@@ -493,7 +493,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 - [x] SEC-01 — Exécution PHP arbitraire ✅
 
 ### Sprint 2 — Intégrité & traversal
-- [ ] SEC-02 — Whitelist provider dans `MigrationCore::setProvider()`
+- [x] SEC-02 — Whitelist provider dans `MigrationCore::setProvider()` ✅
 - [ ] SEC-03 — Vérification checksum à la relecture + correction de la clé `FILE`/`file`
 - [ ] SEC-04 — Remplacer SHA1 par SHA256
 

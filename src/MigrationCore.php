@@ -13,6 +13,8 @@ use RuntimeException;
  */
 class MigrationCore
 {
+    private const VALID_PROVIDERS = ['mysql', 'sqlite', 'postgres'];
+
     /**
      * provider
      * @var string
@@ -232,8 +234,11 @@ class MigrationCore
      * @param string $provider
      * @return static
      */
-    public function setProvider(string $provider)
+    public function setProvider(string $provider): static
     {
+        if (!\in_array($provider, self::VALID_PROVIDERS, true)) {
+            throw new \InvalidArgumentException("Provider '$provider' non supporté.");
+        }
         $this->provider = $provider;
         return $this;
     }
