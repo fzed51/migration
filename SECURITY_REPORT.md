@@ -33,7 +33,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-02 | **ÉLEVÉ** | ✅ CORRIGÉ | Path traversal via provider non validé | `MigrationCore.php` |
 | SEC-03 | ~~ÉLEVÉ~~ | ✅ CORRIGÉ | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
 | SEC-04 | MOYEN | ✅ RISQUE ACCEPTÉ | SHA1 cryptographiquement cassé | `MigrationCore.php` |
-| SEC-05 | MOYEN | 🟡 OUVERT | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
+| SEC-05 | ~~MOYEN~~ | ✅ CORRIGÉ | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
 | SEC-06 | MOYEN | 🟡 OUVERT | `display_errors = On` en dur | `bin/migrate` |
 | SEC-07 | FAIBLE | 🔵 OUVERT | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
 | SEC-08 | FAIBLE | 🔵 OUVERT | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
@@ -249,15 +249,16 @@ Par ailleurs, migrer vers SHA256 briserait la rétrocompatibilité des projets e
 
 ---
 
-### 🟡 SEC-05 — Race condition TOCTOU — création de fichier
+### ✅ SEC-05 — Race condition TOCTOU — création de fichier [CORRIGÉ]
 
 **Sévérité** : MOYEN  
 **CWE** : CWE-367 — Time-of-Check Time-of-Use (TOCTOU)  
-**Fichier** : `src/CreateMigration.php:92-100` — `createFile()`
+**Fichier** : `src/CreateMigration.php` — `createFile()`
 
 #### Description
 
 ```php
+// AVANT — vulnérable
 do {
     $index++;
     $pattern = $path . DIRECTORY_SEPARATOR . $date . '-' . substr('00' . $index, -2) . '-*.sql';
@@ -267,20 +268,35 @@ $filename = $date . '-' . substr('00' . $index, -2) . '-' . $this->new_migration
 touch($path . DIRECTORY_SEPARATOR . $filename);  // USE — fenêtre de course ici
 ```
 
-Entre la vérification `glob()` et le `touch()`, un autre processus concurrent peut créer
+Entre la vérification `glob()` et le `touch()`, un autre processus concurrent pouvait créer
 le même fichier. Résultat : fichier de migration écrasé silencieusement (contenu vide).
 
-#### Correctif recommandé
+#### Correctif appliqué
 
-Utiliser `fopen()` avec le flag `x` (création exclusive, échec si le fichier existe) :
+`touch()` remplacé par `fopen()` avec le flag `x` (création exclusive — l'OS garantit
+l'atomicité). Si `fopen()` échoue (le fichier a été créé entretemps), l'index est
+incrémenté et une nouvelle tentative est effectuée :
 
 ```php
-$handle = @fopen($path . DIRECTORY_SEPARATOR . $filename, 'x');
-if ($handle === false) {
-    // concurrence détectée, retenter avec l'index suivant
+// APRÈS — corrigé
+while (true) {
+    $index++;
+    $pattern = $path . DIRECTORY_SEPARATOR . $date . '-' . substr('00' . $index, -2) . '-*.sql';
+    if (count(glob($pattern) ?: []) > 0) {
+        continue;
+    }
+    $filename = $date . '-' . substr('00' . $index, -2) . '-' . $this->new_migration . '.sql';
+    $handle = @fopen($path . DIRECTORY_SEPARATOR . $filename, 'x');
+    if ($handle !== false) {
+        fclose($handle);
+        return $filename;
+    }
 }
-fclose($handle);
 ```
+
+**Tests couvrant cette correction** : `test/CreateMigrationSecurityTest.php` —
+`testCreatesFileWithFirstIndex`, `testSkipsIndexWhenAnyFileWithSameDateAndIndexExists`,
+`testAtomicCreationDoesNotOverwriteExistingFile`, `testCreatesFileAtNextIndexWhenMultipleFilesExist`.
 
 ---
 
@@ -493,7 +509,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 - [x] SEC-04 — SHA1 : risque accepté (voir analyse) ✅
 
 ### Sprint 3 — Robustesse
-- [ ] SEC-05 — Race condition TOCTOU avec `fopen(..., 'x')`
+- [x] SEC-05 — Race condition TOCTOU avec `fopen(..., 'x')` ✅
 - [ ] SEC-06 — `display_errors` conditionnel à `APP_ENV`
 - [ ] SEC-10 — Écriture atomique dans `MigrationInit`
 

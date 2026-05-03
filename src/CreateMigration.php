@@ -88,17 +88,21 @@ class CreateMigration
     {
         $date = (new \DateTime())->format('Ymd');
         $index = 0;
-        $notFound = false;
-        do {
+        while (true) {
             $index++;
             $pattern = $path . DIRECTORY_SEPARATOR
                 . $date . '-' . substr('00' . $index, -2) . '-*.sql';
-            $notFound = (0 === count(glob($pattern)));
-        } while (!$notFound);
-        $filename = $date . '-' . substr('00' . $index, -2) . '-'
-            . $this->new_migration . '.sql';
-        touch($path . DIRECTORY_SEPARATOR . $filename);
-        return $filename;
+            if (count(glob($pattern) ?: []) > 0) {
+                continue;
+            }
+            $filename = $date . '-' . substr('00' . $index, -2) . '-'
+                . $this->new_migration . '.sql';
+            $handle = @fopen($path . DIRECTORY_SEPARATOR . $filename, 'x');
+            if ($handle !== false) {
+                fclose($handle);
+                return $filename;
+            }
+        }
     }
 
     /**
