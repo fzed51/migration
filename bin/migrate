@@ -9,7 +9,13 @@ use Migration\Migration;
 use Migration\MigrationConfigFile;
 use Migration\MigrationInit;
 
-ini_set('display_errors', 'On');
+if (getenv('APP_ENV') === 'development') {
+    ini_set('display_errors', 'On');
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 'Off');
+    ini_set('log_errors', 'On');
+}
 
 if (is_file('../../../vendor/autoload.php')) {
     require_once '../../../vendor/autoload.php';

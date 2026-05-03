@@ -34,7 +34,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-03 | ~~ÉLEVÉ~~ | ✅ CORRIGÉ | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
 | SEC-04 | MOYEN | ✅ RISQUE ACCEPTÉ | SHA1 cryptographiquement cassé | `MigrationCore.php` |
 | SEC-05 | ~~MOYEN~~ | ✅ CORRIGÉ | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
-| SEC-06 | MOYEN | 🟡 OUVERT | `display_errors = On` en dur | `bin/migrate` |
+| SEC-06 | ~~MOYEN~~ | ✅ CORRIGÉ | `display_errors = On` en dur | `bin/migrate` |
 | SEC-07 | FAIBLE | 🔵 OUVERT | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
 | SEC-08 | FAIBLE | 🔵 OUVERT | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
 | SEC-09 | FAIBLE | 🔵 OUVERT | Pas de validation des types dans `initIntern()` | `MigrationConfigFile.php` |
@@ -300,27 +300,28 @@ while (true) {
 
 ---
 
-### 🟡 SEC-06 — `display_errors = On` en dur
+### ✅ SEC-06 — `display_errors = On` en dur [CORRIGÉ]
 
 **Sévérité** : MOYEN  
 **CWE** : CWE-209 — Information Exposure Through an Error Message  
-**Fichier** : `bin/migrate:12`
+**Fichier** : `bin/migrate`
 
 #### Description
 
 ```php
+// AVANT — vulnérable
 ini_set('display_errors', 'On');
 ```
 
-Cette directive est forcée sans condition d'environnement. En cas d'erreur fatale non interceptée,
+Cette directive était forcée sans condition d'environnement. En cas d'erreur fatale non interceptée,
 PHP peut afficher : chemins absolus du serveur, structure de la base de données, stack traces
 contenant des credentials partiels. Ces informations peuvent se retrouver dans des logs centralisés
 (Datadog, Splunk, ELK) ou être capturées par des pipelines CI/CD.
 
-#### Correctif recommandé
+#### Correctif appliqué
 
 ```php
-// Activer uniquement en développement
+// APRÈS — corrigé
 if (getenv('APP_ENV') === 'development') {
     ini_set('display_errors', 'On');
     error_reporting(E_ALL);
@@ -329,6 +330,9 @@ if (getenv('APP_ENV') === 'development') {
     ini_set('log_errors', 'On');
 }
 ```
+
+En production (ou en l'absence de `APP_ENV=development`), les erreurs sont redirigées vers
+les logs système sans être affichées. Pour activer le mode verbeux : `APP_ENV=development bin/migrate`.
 
 ---
 
@@ -510,7 +514,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 
 ### Sprint 3 — Robustesse
 - [x] SEC-05 — Race condition TOCTOU avec `fopen(..., 'x')` ✅
-- [ ] SEC-06 — `display_errors` conditionnel à `APP_ENV`
+- [x] SEC-06 — `display_errors` conditionnel à `APP_ENV` ✅
 - [ ] SEC-10 — Écriture atomique dans `MigrationInit`
 
 ### Sprint 4 — Durcissement
