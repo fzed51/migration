@@ -98,5 +98,4 @@ class BinTest extends DbTestCase
         $nbStory = $this->query()->countElement('migration_story');
         self::assertEquals(0, $nbStory);
     }
-
 }

@@ -81,6 +81,5 @@ class DbTestCase extends TestCase
                 }
             }
         }
-
     }
 }
