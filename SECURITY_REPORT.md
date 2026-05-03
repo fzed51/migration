@@ -35,7 +35,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-04 | MOYEN | ✅ RISQUE ACCEPTÉ | SHA1 cryptographiquement cassé | `MigrationCore.php` |
 | SEC-05 | ~~MOYEN~~ | ✅ CORRIGÉ | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
 | SEC-06 | ~~MOYEN~~ | ✅ CORRIGÉ | `display_errors = On` en dur | `bin/migrate` |
-| SEC-07 | FAIBLE | 🔵 OUVERT | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
+| SEC-07 | ~~FAIBLE~~ | ✅ CORRIGÉ | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
 | SEC-08 | FAIBLE | 🔵 OUVERT | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
 | SEC-09 | FAIBLE | 🔵 OUVERT | Pas de validation des types dans `initIntern()` | `MigrationConfigFile.php` |
 | SEC-10 | FAIBLE | 🔵 OUVERT | Création de fichier config non atomique | `MigrationInit.php` |
@@ -336,46 +336,45 @@ les logs système sans être affichées. Pour activer le mode verbeux : `APP_ENV
 
 ---
 
-### 🔵 SEC-07 — Credentials DB dans des propriétés publiques
+### ✅ SEC-07 — Credentials DB dans des propriétés publiques [CORRIGÉ]
 
 **Sévérité** : FAIBLE  
 **CWE** : CWE-312 — Cleartext Storage of Sensitive Information  
-**Fichier** : `src/MigrationConfig.php:21-51`
+**Fichier** : `src/MigrationConfig.php`
 
 #### Description
 
-```php
-class MigrationConfig
-{
-    public $user;
-    public $pass;    // accessible depuis n'importe quel contexte
-    // ...
-}
-```
-
-Les credentials de base de données sont exposés comme propriétés publiques sans encapsulation.
+Les credentials de base de données étaient exposés comme propriétés publiques sans encapsulation.
 Risques : sérialisation accidentelle (`var_export`, `json_encode`), log de debug, dump de variables.
 
-#### Correctif recommandé
+#### Correctif appliqué
 
-PHP 8.1 — utiliser `readonly` pour une immutabilité avec accès contrôlé :
+Toutes les propriétés sont désormais `readonly` via constructor promotion (PHP 8.1) :
 
 ```php
 class MigrationConfig
 {
+    public readonly string $migration_directory;
+
     public function __construct(
-        public readonly string $migration_directory,
+        string $migration_directory,
         public readonly string $provider,
         public readonly string $host,
         public readonly int    $port,
         public readonly string $name,
         public readonly string $user,
         public readonly string $pass,
-    ) { /* ... */ }
+    ) {
+        // normalisation du chemin (trailing slash)
+        $migration_directory = str_replace('\\', '/', $migration_directory);
+        $this->migration_directory = substr($migration_directory, -1) === '/'
+            ? $migration_directory
+            : $migration_directory . '/';
+    }
 }
 ```
 
-> Alternativement : passer les propriétés en `private` et n'exposer `pass` via aucun accesseur.
+`MigrationConfigFile` a été refactorisée pour extraire les valeurs dans des variables locales avant d'appeler `parent::__construct()` — les propriétés `readonly` ne peuvent être écrites qu'une seule fois depuis la portée de la classe déclarante.
 
 ---
 
@@ -518,7 +517,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 - [ ] SEC-10 — Écriture atomique dans `MigrationInit`
 
 ### Sprint 4 — Durcissement
-- [ ] SEC-07 — Propriétés `readonly` dans `MigrationConfig`
+- [x] SEC-07 — Propriétés `readonly` dans `MigrationConfig` ✅
 - [ ] SEC-08 — Limite de taille sur la lecture du JSON
 - [ ] SEC-09 — Validation des types dans `initIntern()`
 - [ ] SEC-11 — Correction regex `[^a-z0-9]`
