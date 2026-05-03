@@ -38,6 +38,9 @@ class MigrationConfigFile extends MigrationConfig
             throw new RuntimeException("le fichier $config_filename n'a pas été trouvé.");
         }
         $this->configFilename = (string)realpath($config_filename);
+        if (filesize($config_filename) > 1024 * 1024) {
+            throw new RuntimeException("Le fichier de configuration est trop volumineux (> 1 Mo).");
+        }
         $this->config = json_decode(file_get_contents($config_filename), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             $errorMsg = json_last_error_msg();

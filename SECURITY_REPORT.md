@@ -36,7 +36,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-05 | ~~MOYEN~~ | ✅ CORRIGÉ | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
 | SEC-06 | ~~MOYEN~~ | ✅ CORRIGÉ | `display_errors = On` en dur | `bin/migrate` |
 | SEC-07 | ~~FAIBLE~~ | ✅ CORRIGÉ | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
-| SEC-08 | FAIBLE | 🔵 OUVERT | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
+| SEC-08 | ~~FAIBLE~~ | ✅ CORRIGÉ | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
 | SEC-09 | FAIBLE | 🔵 OUVERT | Pas de validation des types dans `initIntern()` | `MigrationConfigFile.php` |
 | SEC-10 | FAIBLE | 🔵 OUVERT | Création de fichier config non atomique | `MigrationInit.php` |
 | SEC-11 | FAIBLE | 🔵 OUVERT | Regex `[^a-z0-1]` — chiffres 2-9 mal filtrés | `CreateMigration.php` |
@@ -378,26 +378,21 @@ class MigrationConfig
 
 ---
 
-### 🔵 SEC-08 — Lecture de fichier config sans limite de taille
+### ✅ SEC-08 — Lecture de fichier config sans limite de taille [CORRIGÉ]
 
 **Sévérité** : FAIBLE  
 **CWE** : CWE-400 — Uncontrolled Resource Consumption  
-**Fichier** : `src/MigrationConfigFile.php:42`
+**Fichier** : `src/MigrationConfigFile.php`
 
 #### Description
 
-```php
-$this->config = json_decode(file_get_contents($config_filename), true);
-```
+`file_get_contents` chargeait l'intégralité du fichier en mémoire sans aucune limite de taille.
+Un fichier de config anormalement volumineux pouvait provoquer un épuisement mémoire.
 
-`file_get_contents` charge l'intégralité du fichier en mémoire sans aucune limite de taille.
-Un fichier de config anormalement volumineux peut provoquer un épuisement mémoire.
-
-#### Correctif recommandé
+#### Correctif appliqué
 
 ```php
-$maxSize = 1024 * 1024; // 1 Mo — amplement suffisant pour un fichier de config
-if (filesize($config_filename) > $maxSize) {
+if (filesize($config_filename) > 1024 * 1024) {
     throw new RuntimeException("Le fichier de configuration est trop volumineux (> 1 Mo).");
 }
 $this->config = json_decode(file_get_contents($config_filename), true);
@@ -518,7 +513,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 
 ### Sprint 4 — Durcissement
 - [x] SEC-07 — Propriétés `readonly` dans `MigrationConfig` ✅
-- [ ] SEC-08 — Limite de taille sur la lecture du JSON
+- [x] SEC-08 — Limite de taille sur la lecture du JSON ✅
 - [ ] SEC-09 — Validation des types dans `initIntern()`
 - [ ] SEC-11 — Correction regex `[^a-z0-9]`
 
