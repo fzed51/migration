@@ -132,7 +132,7 @@ class CreateMigration
         );
         $str = preg_replace('/&([a-z]{2})(?:lig);/', '\1', $str);
         $str = preg_replace('/&[^;]+;/', ' ', $str);
-        $str = preg_replace('/(\s+)|([^a-z0-1]+)/', '_', $str);
+        $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
         $str = trim($str, '_');
         return $str;
     }

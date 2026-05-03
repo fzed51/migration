@@ -125,14 +125,14 @@ class MigrationConfigFile extends MigrationConfig
                 }
             }
         }
-        return [
-            $config[$configExtern['provider'] ?? 'provider'] ?? '',
-            $config[$configExtern['host'] ?? 'host'] ?? '',
-            $config[$configExtern['port'] ?? 'port'] ?? 0,
-            $config[$configExtern['name'] ?? 'name'] ?? '',
-            $config[$configExtern['user'] ?? 'user'] ?? '',
-            $config[$configExtern['pass'] ?? 'pass'] ?? '',
-        ];
+        return $this->validateTypes(
+            $config[$configExtern['provider'] ?? 'provider'] ?? null,
+            $config[$configExtern['host'] ?? 'host'] ?? null,
+            $config[$configExtern['port'] ?? 'port'] ?? null,
+            $config[$configExtern['name'] ?? 'name'] ?? null,
+            $config[$configExtern['user'] ?? 'user'] ?? null,
+            $config[$configExtern['pass'] ?? 'pass'] ?? null,
+        );
     }
 
     /**
@@ -141,14 +141,46 @@ class MigrationConfigFile extends MigrationConfig
      */
     private function resolveIntern(): array
     {
-        $configIntern = $this->config['config_intern'];
+        $c = $this->config['config_intern'];
+        return $this->validateTypes(
+            $c['provider'] ?? null,
+            $c['host'] ?? null,
+            $c['port'] ?? null,
+            $c['name'] ?? null,
+            $c['user'] ?? null,
+            $c['pass'] ?? null,
+        );
+    }
+
+    /**
+     * Valide les types des valeurs de connexion extraites du JSON.
+     * Une valeur absente (null) est acceptée et remplacée par le défaut ; une valeur
+     * présente avec le mauvais type lève une RuntimeException.
+     * @return array{string, string, int, string, string, string}
+     */
+    private function validateTypes(
+        mixed $provider,
+        mixed $host,
+        mixed $port,
+        mixed $name,
+        mixed $user,
+        mixed $pass,
+    ): array {
+        foreach (['provider' => $provider, 'host' => $host, 'name' => $name, 'user' => $user, 'pass' => $pass] as $key => $val) {
+            if ($val !== null && !is_string($val)) {
+                throw new RuntimeException("La configuration '$key' doit être une chaîne.");
+            }
+        }
+        if ($port !== null && !is_int($port)) {
+            throw new RuntimeException("La configuration 'port' doit être un entier.");
+        }
         return [
-            $configIntern['provider'] ?? '',
-            $configIntern['host'] ?? '',
-            $configIntern['port'] ?? 0,
-            $configIntern['name'] ?? '',
-            $configIntern['user'] ?? '',
-            $configIntern['pass'] ?? '',
+            (string)($provider ?? ''),
+            (string)($host ?? ''),
+            (int)($port ?? 0),
+            (string)($name ?? ''),
+            (string)($user ?? ''),
+            (string)($pass ?? ''),
         ];
     }
 }

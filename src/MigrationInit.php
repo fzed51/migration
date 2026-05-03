@@ -33,7 +33,6 @@ class MigrationInit
     public function run(): void
     {
         if (!is_file($this->config_file)) {
-            touch($this->config_file);
             $structure = [
                 'migration_directory' => './db/migration',
                 'config_extern' => [
@@ -55,7 +54,14 @@ class MigrationInit
                     'pass' => ''
                 ]
             ];
-            file_put_contents($this->config_file, json_encode($structure, JSON_PRETTY_PRINT));
+            $tmp = $this->config_file . '.tmp';
+            if (file_put_contents($tmp, json_encode($structure, JSON_PRETTY_PRINT)) === false) {
+                throw new \RuntimeException("Impossible d'écrire le fichier de configuration temporaire.");
+            }
+            if (!rename($tmp, $this->config_file)) {
+                unlink($tmp);
+                throw new \RuntimeException("Impossible de créer le fichier de configuration.");
+            }
         } else {
             throw new \RuntimeException(
                 "Impossible d'initialiser le fichier de configuration car ce fichier existe déjà."

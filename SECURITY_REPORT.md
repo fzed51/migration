@@ -37,9 +37,9 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-06 | ~~MOYEN~~ | ✅ CORRIGÉ | `display_errors = On` en dur | `bin/migrate` |
 | SEC-07 | ~~FAIBLE~~ | ✅ CORRIGÉ | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
 | SEC-08 | ~~FAIBLE~~ | ✅ CORRIGÉ | Lecture de config sans limite de taille | `MigrationConfigFile.php` |
-| SEC-09 | FAIBLE | 🔵 OUVERT | Pas de validation des types dans `initIntern()` | `MigrationConfigFile.php` |
-| SEC-10 | FAIBLE | 🔵 OUVERT | Création de fichier config non atomique | `MigrationInit.php` |
-| SEC-11 | FAIBLE | 🔵 OUVERT | Regex `[^a-z0-1]` — chiffres 2-9 mal filtrés | `CreateMigration.php` |
+| SEC-09 | ~~FAIBLE~~ | ✅ CORRIGÉ | Pas de validation des types dans `initIntern()` | `MigrationConfigFile.php` |
+| SEC-10 | ~~FAIBLE~~ | ✅ CORRIGÉ | Création de fichier config non atomique | `MigrationInit.php` |
+| SEC-11 | ~~FAIBLE~~ | ✅ CORRIGÉ | Regex `[^a-z0-1]` — chiffres 2-9 mal filtrés | `CreateMigration.php` |
 
 ---
 
@@ -400,98 +400,80 @@ $this->config = json_decode(file_get_contents($config_filename), true);
 
 ---
 
-### 🔵 SEC-09 — Pas de validation des types dans `initIntern()`
+### ✅ SEC-09 — Pas de validation des types dans `initIntern()` [CORRIGÉ]
 
 **Sévérité** : FAIBLE  
 **CWE** : CWE-20 — Improper Input Validation  
-**Fichier** : `src/MigrationConfigFile.php:138-145` — `initIntern()`
+**Fichier** : `src/MigrationConfigFile.php`
 
 #### Description
 
-```php
-private function initIntern(): void
-{
-    $configIntern = $this->config['config_intern'];
-    $this->provider = $configIntern['provider'] ?? '';  // pourrait être un array
-    $this->port     = $configIntern['port']     ?? 0;   // pourrait être une string
-    // ...
-}
-```
+Les valeurs JSON n'étaient pas validées en type avant affectation. Un `port` fourni comme `"abc"`
+n'était pas rejeté et pouvait causer des comportements inattendus dans `PDOFactory`.
 
-Les valeurs JSON ne sont pas validées en type avant affectation. Un `port` fourni comme `"abc"`
-n'est pas rejeté. En PHP non strict, cela passe silencieusement et peut causer des comportements
-inattendus dans `PDOFactory`.
+#### Correctif appliqué
 
-#### Correctif recommandé
-
-Valider les types au chargement :
+Ajout d'un helper privé `validateTypes()` appelé par `resolveIntern()` et `resolveExternPhp()`.
+Une valeur présente avec le mauvais type lève une `RuntimeException` ; une valeur absente (`null`)
+est acceptée et remplacée par le défaut (`''` / `0`) :
 
 ```php
-if (!is_string($configIntern['provider'] ?? null)) {
-    throw new RuntimeException("'provider' doit être une chaîne.");
+foreach (['provider' => $provider, 'host' => $host, ...] as $key => $val) {
+    if ($val !== null && !is_string($val)) {
+        throw new RuntimeException("La configuration '$key' doit être une chaîne.");
+    }
 }
-if (!is_int($configIntern['port'] ?? null)) {
-    throw new RuntimeException("'port' doit être un entier.");
+if ($port !== null && !is_int($port)) {
+    throw new RuntimeException("La configuration 'port' doit être un entier.");
 }
 ```
 
 ---
 
-### 🔵 SEC-10 — Création du fichier config non atomique
+### ✅ SEC-10 — Création du fichier config non atomique [CORRIGÉ]
 
 **Sévérité** : FAIBLE  
 **CWE** : CWE-362 — Concurrent Execution Using Shared Resource  
-**Fichier** : `src/MigrationInit.php:35-58` — `run()`
+**Fichier** : `src/MigrationInit.php`
 
 #### Description
 
-```php
-if (!is_file($this->config_file)) {
-    touch($this->config_file);                                    // étape 1
-    // ...
-    file_put_contents($this->config_file, json_encode($structure)); // étape 2
-}
-```
+`touch()` créait le fichier avant l'écriture du contenu. Si `file_put_contents()` échouait,
+le fichier existait mais était **vide**, bloquant toute réinitialisation ultérieure.
 
-Si `file_put_contents()` échoue après `touch()` (permissions, disque plein), le fichier existe
-mais est **vide**. Lors d'un appel suivant, la condition `!is_file()` sera fausse et une exception
-sera levée — rendant impossible la réinitialisation sans intervention manuelle.
+#### Correctif appliqué
 
-#### Correctif recommandé
-
-Écrire dans un fichier temporaire puis renommer (`rename()` est atomique sur le même filesystem) :
+Suppression de `touch()`. Écriture dans un fichier temporaire puis `rename()` atomique ;
+en cas d'échec, le `.tmp` est supprimé et une exception est levée :
 
 ```php
 $tmp = $this->config_file . '.tmp';
-file_put_contents($tmp, json_encode($structure, JSON_PRETTY_PRINT));
-rename($tmp, $this->config_file);
+if (file_put_contents($tmp, json_encode($structure, JSON_PRETTY_PRINT)) === false) {
+    throw new \RuntimeException("Impossible d'écrire le fichier de configuration temporaire.");
+}
+if (!rename($tmp, $this->config_file)) {
+    unlink($tmp);
+    throw new \RuntimeException("Impossible de créer le fichier de configuration.");
+}
 ```
 
 ---
 
-### 🔵 SEC-11 — Regex `[^a-z0-1]` — chiffres 2-9 ignorés dans les noms de migration
+### ✅ SEC-11 — Regex `[^a-z0-1]` — chiffres 2-9 ignorés dans les noms de migration [CORRIGÉ]
 
 **Sévérité** : FAIBLE  
 **CWE** : CWE-20 — Improper Input Validation  
-**Fichier** : `src/CreateMigration.php:131` — `cleanName()`
+**Fichier** : `src/CreateMigration.php` — `cleanName()`
 
 #### Description
 
-```php
-$str = preg_replace('/(\s+)|([^a-z0-1]+)/', '_', $str);
-//                              ^^^^^ devrait être 0-9
-```
+La plage `0-1` ne couvrait que les chiffres `0` et `1` ; les chiffres `2` à `9` étaient remplacés
+par `_`. Ainsi, `add_index_2024` devenait `add_index____`.
 
-La plage `0-1` couvre uniquement les chiffres `0` et `1`. Les chiffres `2` à `9` sont remplacés
-par `_`. Ainsi, un nom `add_index_2024` devient `add_index____`. Ce n'est pas une faille de
-sécurité directe, mais un nom de fichier incorrect peut induire en erreur sur la chronologie
-des migrations.
-
-#### Correctif recommandé
+#### Correctif appliqué
 
 ```php
 $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
-//                              ^^^^^ 0-9
 ```
 
 ---
@@ -509,13 +491,13 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 ### Sprint 3 — Robustesse
 - [x] SEC-05 — Race condition TOCTOU avec `fopen(..., 'x')` ✅
 - [x] SEC-06 — `display_errors` conditionnel à `APP_ENV` ✅
-- [ ] SEC-10 — Écriture atomique dans `MigrationInit`
+- [x] SEC-10 — Écriture atomique dans `MigrationInit` ✅
 
 ### Sprint 4 — Durcissement
 - [x] SEC-07 — Propriétés `readonly` dans `MigrationConfig` ✅
 - [x] SEC-08 — Limite de taille sur la lecture du JSON ✅
-- [ ] SEC-09 — Validation des types dans `initIntern()`
-- [ ] SEC-11 — Correction regex `[^a-z0-9]`
+- [x] SEC-09 — Validation des types dans `initIntern()` ✅
+- [x] SEC-11 — Correction regex `[^a-z0-9]` ✅
 
 ---
 
