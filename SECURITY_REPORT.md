@@ -32,7 +32,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 | SEC-01 | ~~CRITIQUE~~ | ✅ CORRIGÉ | Exécution PHP arbitraire via `config_extern.file` | `MigrationConfigFile.php` |
 | SEC-02 | **ÉLEVÉ** | ✅ CORRIGÉ | Path traversal via provider non validé | `MigrationCore.php` |
 | SEC-03 | ~~ÉLEVÉ~~ | ✅ CORRIGÉ | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
-| SEC-04 | MOYEN | 🟡 OUVERT | SHA1 cryptographiquement cassé | `MigrationCore.php` |
+| SEC-04 | MOYEN | ✅ RISQUE ACCEPTÉ | SHA1 cryptographiquement cassé | `MigrationCore.php` |
 | SEC-05 | MOYEN | 🟡 OUVERT | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
 | SEC-06 | MOYEN | 🟡 OUVERT | `display_errors = On` en dur | `bin/migrate` |
 | SEC-07 | FAIBLE | 🔵 OUVERT | Credentials DB dans des propriétés publiques | `MigrationConfig.php` |
@@ -218,7 +218,7 @@ Tests ajoutés : `MigrationCoreSecurityTest` — `testTamperedMigrationThrowsRun
 
 ---
 
-### 🟡 SEC-04 — SHA1 cryptographiquement cassé
+### ✅ SEC-04 — SHA1 cryptographiquement cassé [RISQUE ACCEPTÉ]
 
 **Sévérité** : MOYEN  
 **CWE** : CWE-327 — Use of a Broken or Risky Cryptographic Algorithm  
@@ -235,13 +235,17 @@ en pratique). Un attaquant disposant des ressources nécessaires pourrait forger
 alternatif ayant exactement le même SHA1, contournant la contrainte `UNIQUE` sur `checksum`
 dans `migration_story`.
 
-#### Correctif recommandé
+#### Analyse du risque réel
 
-```php
-$checksum = hash_file('sha256', $filename);
-```
+Dans ce contexte, le checksum sert à **détecter une modification accidentelle** d'un fichier de migration déjà appliqué — il ne déclenche pas de ré-exécution. Si un attaquant remplace un fichier par une version forgée avec le même SHA1, le SQL malveillant n'est **pas exécuté** (la migration est marquée comme déjà appliquée) ; seule l'auditabilité est compromise.
 
-> À coordonner avec SEC-03 : si la vérification de checksum est ajoutée, utiliser SHA256 dès le départ.
+Ce scénario d'attaque nécessite :
+1. Un accès en écriture au filesystem (déjà une compromission critique) ;
+2. Des ressources significatives pour calculer une collision SHA1 intentionnelle (~110 GPU-années, attaque SHAttered 2017).
+
+Par ailleurs, migrer vers SHA256 briserait la rétrocompatibilité des projets existants : les checksums SHA1 déjà stockés en base échoueraient à la vérification.
+
+**Décision** : risque accepté. SHA1 est suffisant pour un outil CLI local dont le checksum joue un rôle d'avertissement d'intégrité, non de garde cryptographique critique. À réévaluer si l'outil évolue vers un contexte multi-utilisateur ou exposé réseau.
 
 ---
 
@@ -486,7 +490,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 ### Sprint 2 — Intégrité & traversal
 - [x] SEC-02 — Whitelist provider dans `MigrationCore::setProvider()` ✅
 - [x] SEC-03 — Vérification checksum à la relecture ✅
-- [ ] SEC-04 — Remplacer SHA1 par SHA256
+- [x] SEC-04 — SHA1 : risque accepté (voir analyse) ✅
 
 ### Sprint 3 — Robustesse
 - [ ] SEC-05 — Race condition TOCTOU avec `fopen(..., 'x')`
