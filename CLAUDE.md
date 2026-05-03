@@ -31,7 +31,9 @@ This is a CLI tool for running SQL database migrations, published as a Composer 
 
 **Database support**: MySQL, SQLite, PostgreSQL via `fzed51/pdo-helper`.
 
-**Testing**: `DbTestCase` uses SQLite in-memory. `BinTest` runs CLI integration tests by executing `bin/migrate` directly.
+**Testing**: `DbTestCase` uses SQLite in-memory via `PDOFactory::sqlite()`. `BinTest` runs CLI integration tests by executing `bin/migrate` directly.
+
+**PDOFactory column casing**: `PDOFactory` sets `PDO::ATTR_CASE = PDO::CASE_UPPER` on every connection it creates (MySQL, SQLite, PostgreSQL). All column names fetched via `fetchAll(PDO::FETCH_ASSOC)` are therefore **uppercase** — e.g. `migration_story.file` is accessed as `$row['FILE']`, `checksum` as `$row['CHECKSUM']`. This is intentional; never lowercase these keys when reading rows returned by `PDOFactory`-managed connections.
 
 ## Code conventions
 

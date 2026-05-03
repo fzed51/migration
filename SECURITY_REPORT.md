@@ -31,7 +31,7 @@ L'analyse couvre l'intégralité des points d'entrée du projet :
 |---|---|---|---|---|
 | SEC-01 | ~~CRITIQUE~~ | ✅ CORRIGÉ | Exécution PHP arbitraire via `config_extern.file` | `MigrationConfigFile.php` |
 | SEC-02 | **ÉLEVÉ** | ✅ CORRIGÉ | Path traversal via provider non validé | `MigrationCore.php` |
-| SEC-03 | **ÉLEVÉ** | 🔴 OUVERT | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
+| SEC-03 | ~~ÉLEVÉ~~ | ✅ CORRIGÉ | Aucune vérification d'intégrité checksum à la relecture | `MigrationCore.php` |
 | SEC-04 | MOYEN | 🟡 OUVERT | SHA1 cryptographiquement cassé | `MigrationCore.php` |
 | SEC-05 | MOYEN | 🟡 OUVERT | Race condition TOCTOU — création de fichier | `CreateMigration.php` |
 | SEC-06 | MOYEN | 🟡 OUVERT | `display_errors = On` en dur | `bin/migrate` |
@@ -165,7 +165,7 @@ public function setProvider(string $provider): static
 
 ---
 
-### 🔴 SEC-03 — Aucune vérification d'intégrité checksum à la relecture
+### ✅ SEC-03 — Aucune vérification d'intégrité checksum à la relecture [CORRIGÉ]
 
 **Sévérité** : ÉLEVÉ  
 **CWE** : CWE-345 — Insufficient Verification of Data Authenticity  
@@ -173,57 +173,48 @@ public function setProvider(string $provider): static
 
 #### Description
 
-Lorsqu'une migration est rejouée, le code vérifie uniquement la présence du **nom de fichier**
-dans `migration_story`. Il ne compare **jamais** le checksum stocké avec le checksum actuel :
-
-```php
-private function controlMigrationFilePassed(string $filename): bool
-{
-    $file = basename(dirname($filename)) . DIRECTORY_SEPARATOR . basename($filename);
-    $migration = array_filter($this->story, static function ($story) use ($file) {
-        // compare uniquement le nom — pas le checksum
-        return (self::cleanDirectorySeparator($story['FILE']) === self::cleanDirectorySeparator($file));
-    });
-    return !(count($migration) === 0);
-}
-```
-
-Un fichier de migration peut être **modifié après son application** sans aucune détection.
+Lorsqu'une migration était rejouée, le code vérifiait uniquement la présence du **nom de fichier**
+dans `migration_story`. Il ne comparait **jamais** le checksum stocké avec le checksum actuel.
+Un fichier de migration pouvait donc être **modifié après son application** sans aucune détection.
 
 #### Scénario d'attaque
 
 1. La migration `20240101-01-create_users.sql` est appliquée et enregistrée
 2. Un attaquant (accès disque) modifie ce fichier pour ajouter un `DROP TABLE users`
 3. Lors du prochain run, la migration est considérée comme déjà passée → pas de détection
-4. Mais si les checksums avaient été vérifiés, une alerte aurait été levée
 
-> Note : il existe également un bug dans la clé utilisée — le champ `file` en base est en minuscule
-> mais le code accède à `$story['FILE']` (majuscule), ce qui peut retourner `null` selon le driver PDO.
-> Ce point mérite une vérification en conditions réelles.
+#### Correctif appliqué
 
-#### Correctif recommandé
+`controlMigrationFilePassed()` compare désormais le checksum SHA1 du fichier sur disque avec
+celui enregistré en base. Toute divergence lève une `RuntimeException` :
 
 ```php
 private function controlMigrationFilePassed(string $filename): bool
 {
     $file = basename(dirname($filename)) . DIRECTORY_SEPARATOR . basename($filename);
     $migration = array_filter($this->story, static function ($story) use ($file) {
-        return self::cleanDirectorySeparator($story['file']) === self::cleanDirectorySeparator($file);
+        return (self::cleanDirectorySeparator($story['FILE']) === self::cleanDirectorySeparator($file));
     });
     if (count($migration) === 0) {
         return false;
     }
-    // Vérification de l'intégrité
     $stored = array_values($migration)[0];
-    $currentChecksum = sha1_file($filename);  // à remplacer par sha256 (SEC-04)
-    if ($stored['checksum'] !== $currentChecksum) {
-        throw new \RuntimeException(
+    $currentChecksum = sha1_file($filename);
+    if ($stored['CHECKSUM'] !== $currentChecksum) {
+        throw new RuntimeException(
             "Intégrité compromise : le fichier '$file' a été modifié après son application."
         );
     }
     return true;
 }
 ```
+
+> **Note sur la casse des clés** : la note précédente signalant un bug sur `$story['FILE']` était
+> incorrecte. `PDOFactory` (vendor `fzed51/pdo-helper`) configure `PDO::ATTR_CASE = PDO::CASE_UPPER`
+> sur toutes les connexions. Les colonnes sont donc bien retournées en majuscules (`FILE`, `CHECKSUM`).
+
+Tests ajoutés : `MigrationCoreSecurityTest` — `testTamperedMigrationThrowsRuntimeException`,
+`testAppliedMigrationIsSkippedWhenChecksumMatches`, `testUntamperedMigrationDoesNotRaiseException`.
 
 ---
 
@@ -494,7 +485,7 @@ $str = preg_replace('/(\s+)|([^a-z0-9]+)/', '_', $str);
 
 ### Sprint 2 — Intégrité & traversal
 - [x] SEC-02 — Whitelist provider dans `MigrationCore::setProvider()` ✅
-- [ ] SEC-03 — Vérification checksum à la relecture + correction de la clé `FILE`/`file`
+- [x] SEC-03 — Vérification checksum à la relecture ✅
 - [ ] SEC-04 — Remplacer SHA1 par SHA256
 
 ### Sprint 3 — Robustesse

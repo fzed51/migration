@@ -213,7 +213,17 @@ class MigrationCore
         $migration = array_filter($this->story, static function ($story) use ($file) {
             return (self::cleanDirectorySeparator($story['FILE']) === self::cleanDirectorySeparator($file));
         });
-        return !(count($migration) === 0);
+        if (count($migration) === 0) {
+            return false;
+        }
+        $stored = array_values($migration)[0];
+        $currentChecksum = sha1_file($filename);
+        if ($stored['CHECKSUM'] !== $currentChecksum) {
+            throw new RuntimeException(
+                "Intégrité compromise : le fichier '$file' a été modifié après son application."
+            );
+        }
+        return true;
     }
 
     /**
