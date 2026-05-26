@@ -119,6 +119,10 @@ class MigrationCore
                 $start = 0;
                 $end = 0;
             } else {
+                $line = trim((string)preg_replace('/--.*/', '', $line));
+                if ($line === '') {
+                    continue;
+                }
                 $start = $start > 0 ? $start : $index;
                 $end = $index;
                 $current_request .= $current_request !== '' ? PHP_EOL : '';
