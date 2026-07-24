@@ -143,4 +143,41 @@ class MigrationCoreSecurityTest extends PHPUnitTestCase
         $this->runSilent($core);
         $this->addToAssertionCount(1);
     }
+
+    // -------------------------------------------------------------------------
+    // Nettoyage des commentaires SQL
+    // -------------------------------------------------------------------------
+
+    public function testSqlLineCommentIsStripped(): void
+    {
+        $sql = "CREATE TABLE comment_test (id INTEGER PRIMARY KEY) -- cette table est un test";
+        $this->createSqlFile($sql);
+        $core = $this->makeCoreWithDb();
+        $this->runSilent($core);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testFullyCommentedOutQueryIsIgnored(): void
+    {
+        $sql = "CREATE TABLE comment_only_test (id INTEGER PRIMARY KEY)\n---\n-- DROP TABLE comment_only_test";
+        $this->createSqlFile($sql);
+        $core = $this->makeCoreWithDb();
+        $this->runSilent($core);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testMixedCommentAndRealSqlExecutesCorrectly(): void
+    {
+        $sql = implode("\n", [
+            '-- création de la table',
+            'CREATE TABLE mixed_comment_test (id INTEGER PRIMARY KEY)',
+            '---',
+            '-- requête mise en commentaire',
+            '-- DROP TABLE mixed_comment_test',
+        ]);
+        $this->createSqlFile($sql);
+        $core = $this->makeCoreWithDb();
+        $this->runSilent($core);
+        $this->addToAssertionCount(1);
+    }
 }
