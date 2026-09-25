@@ -52,7 +52,7 @@ class CreateMigration
         $providers = $this->getProviders();
         foreach ($providers as $provider => $path) {
             $filename = $this->createFile($path);
-            echo " Création du fichier '$filename' pour $provider'" . PHP_EOL;
+            echo "Création du fichier '$path" . DIRECTORY_SEPARATOR . "$filename' pour $provider." . PHP_EOL;
         }
     }
 

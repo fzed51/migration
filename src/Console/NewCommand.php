@@ -40,7 +40,8 @@ class NewCommand extends AbstractConfigCommand
   Non : chaque appel crée un nouveau fichier avec le numéro NN suivant.
 
 <comment>Sortie :</comment>
-  Une ligne par fichier créé : " Création du fichier '<fichier>' pour <provider>'".
+  Une ligne par fichier créé, avec son chemin absolu :
+  "Création du fichier '<chemin absolu>' pour <provider>."
 
 <comment>Erreurs fréquentes :</comment>
   - "Aucun dossier provider n'existe" : aucun fichier créé, code de retour différent de 0.

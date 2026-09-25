@@ -76,11 +76,18 @@ class CreateProviderDirectory
     private function createDirectory(string $migrationDirectory, ?string $provider)
     {
         if ($provider !== null) {
-            $concurrentDirectory = $migrationDirectory . DIRECTORY_SEPARATOR . $provider;
-            if (!is_dir($concurrentDirectory) && !mkdir($concurrentDirectory) && !is_dir($concurrentDirectory)) {
-                throw new RuntimeException("impossible de créer le dossier du provier '$provider' dans '$migrationDirectory'.");
+            // migration_directory se termine déjà par un séparateur (cf. MigrationConfig)
+            $concurrentDirectory = rtrim($migrationDirectory, '/\\') . '/' . $provider;
+            if (is_dir($concurrentDirectory)) {
+                echo "Le dossier $concurrentDirectory existe déjà." . PHP_EOL;
+                return;
             }
-            echo "Le dossier $concurrentDirectory a été créé avec succes." . PHP_EOL;
+            if (!mkdir($concurrentDirectory) && !is_dir($concurrentDirectory)) {
+                throw new RuntimeException(
+                    "Impossible de créer le dossier du provider '$provider' dans '$migrationDirectory'."
+                );
+            }
+            echo "Le dossier $concurrentDirectory a été créé avec succès." . PHP_EOL;
         }
     }
 }

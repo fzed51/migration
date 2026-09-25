@@ -108,7 +108,7 @@ class BinTest extends DbTestCase
      */
     public function testCreatProviderDirectory(): void
     {
-        $this->expectOutputRegex("/Le dossier .* a été créé avec succes/");
+        $this->expectOutputRegex("#Le dossier [^\\\\]*/migration/mysql a été créé avec succès\.#");
         $this->deleteConfigFile();
         $this->deleteDbFile();
         $this->putMigrationConfigFile();
@@ -119,11 +119,28 @@ class BinTest extends DbTestCase
     }
 
     /**
+     * provider sur un dossier existant réussit sans le recréer
+     */
+    public function testCreatProviderDirectoryAlreadyExists(): void
+    {
+        $this->expectOutputRegex("#Le dossier [^\\\\]*/migration/sqlite existe déjà\.#");
+        $this->putMigrationConfigFile();
+        $providerDirectory = __DIR__ . "/migration/sqlite";
+        mkdir($providerDirectory);
+        try {
+            $tester = $this->runMigrate(['command' => 'provider', 'name' => 'sqlite']);
+            self::assertSame(0, $tester->getStatusCode());
+        } finally {
+            rmdir($providerDirectory);
+        }
+    }
+
+    /**
      * test de la commande new
      */
     public function testCreateNewMigration(): void
     {
-        $this->expectOutputRegex("/Création du fichier '\d{8}-01-creation_user\.sql'/");
+        $this->expectOutputRegex("#^Création du fichier '.+[\\\\/]sqlite[\\\\/]\d{8}-01-creation_user\.sql' pour sqlite\.\r?\n#m");
         $this->putMigrationConfigFile();
         $providerDirectory = __DIR__ . "/migration/sqlite";
         if (!is_dir($providerDirectory)) {

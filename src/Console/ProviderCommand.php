@@ -41,7 +41,7 @@ class ProviderCommand extends AbstractConfigCommand
   Oui : si le dossier existe déjà, la commande réussit sans rien modifier.
 
 <comment>Sortie :</comment>
-  "Le dossier <chemin> a été créé avec succes."
+  "Le dossier <chemin> a été créé avec succès." ou "Le dossier <chemin> existe déjà."
 
 <comment>Erreurs fréquentes :</comment>
   - "Le provider 'x' n'est pas connu" : utiliser mysql, sqlite, postgres ou postgresql.
