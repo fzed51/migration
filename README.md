@@ -35,17 +35,16 @@ Le binaire est installé dans `./vendor/bin/migrate`.
 Exemple complet avec SQLite :
 
 ```shell
-# 1. créer le fichier de configuration ./migration-config.json
+# 1. créer le fichier de configuration ./migration-config.json et le dossier ./db/migration
 ./vendor/bin/migrate init
 
 # 2. éditer ./migration-config.json (voir « Configuration »), par exemple :
-#    "migration_directory": "./db/migration",
 #    "config_intern": { "provider": "sqlite", "name": "./db/data.sqlite" }
 
-# 3. créer le dossier de migration (et, pour SQLite, le fichier de base)
-mkdir -p db/migration && touch db/data.sqlite
+# 3. pour SQLite uniquement : créer le fichier de base
+touch db/data.sqlite
 
-# 4. créer le dossier du provider
+# 4. créer le dossier du provider : db/migration/sqlite/
 ./vendor/bin/migrate provider sqlite
 
 # 5. créer un fichier de migration vide : db/migration/sqlite/YYYYMMDD-01-create_user.sql
@@ -79,8 +78,8 @@ Options globales fournies par Symfony Console : `-h|--help`, `-V|--version`, `-q
 ### `migrate init`
 
 - **Effet** : écrit un modèle de configuration au chemin `--config`, avec `migration_directory: ./db/migration` et les sections `config_intern` et `config_extern` à compléter.
-- **Ne crée pas** le dossier `migration_directory`.
-- **Échoue** si le fichier existe déjà : il n'est jamais écrasé.
+- **Crée** aussi le dossier `./db/migration`, relatif au répertoire courant, s'il n'existe pas.
+- **Échoue** si le fichier existe déjà : il n'est jamais écrasé, et le dossier n'est pas créé.
 - Ne contacte pas la base.
 
 ### `migrate provider <name>`
@@ -96,7 +95,7 @@ Options globales fournies par Symfony Console : `-h|--help`, `-V|--version`, `-q
   - `YYYYMMDD` est la date du jour.
   - `NN` est le numéro d'ordre du jour : 01, 02…
   - `<name>` est normalisé : minuscules, accents retirés, et chaque caractère non alphanumérique remplacé par `_`. Par exemple, `"Création User"` devient `creation_user`.
-- **Attention** : s'il n'existe aucun dossier provider, la commande affiche un simple avertissement, ne crée aucun fichier et **retourne quand même 0**.
+- **Échoue** (code de retour différent de 0) s'il n'existe aucun dossier provider : lancez d'abord `migrate provider <name>`.
 
 ### `migrate run`
 
@@ -213,7 +212,7 @@ Règles à suivre pour piloter l'outil automatiquement :
    ./vendor/bin/migrate help run --format=md  # aide d'une commande en Markdown
    ```
 2. **Lancer en mode non interactif et sans couleurs** : `--no-interaction --no-ansi`.
-3. **Toujours tester le code de retour**. Exception : `new` retourne 0 même quand aucun dossier provider n'existe, il faut donc aussi vérifier la sortie ou la présence du fichier.
+3. **Toujours tester le code de retour** : toute commande qui n'a pas pu faire son travail retourne un code différent de 0.
 4. **`run` est la seule commande qui modifie la base.** Il n'y a ni transaction ni rollback.
 5. **Ne jamais éditer un fichier déjà appliqué.** Pour corriger, créez une nouvelle migration avec `migrate new`.
 
@@ -239,6 +238,8 @@ La v3 remplace les options par des sous-commandes (CLI basée sur `symfony/conso
 Autres changements :
 
 - en cas d'erreur, le code de retour est différent de 0, et le message est écrit sur stderr ;
+- `init` crée aussi le dossier `./db/migration` ;
+- `new` échoue quand aucun dossier provider n'existe (la v2 affichait seulement un avertissement) ;
 - `--help` et `--version` sont disponibles.
 
 ## Développement

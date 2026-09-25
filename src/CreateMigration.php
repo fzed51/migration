@@ -71,10 +71,12 @@ class CreateMigration
             }
         }
         if (count($list) === 0) {
-            echo " Attention aucun répertoire n'existe pour le provider "
-                . $this->config->provider.
-                " dans le repertoire "
-                .$this->config->migration_directory;
+            throw new \RuntimeException(
+                "Aucun dossier provider n'existe dans '{$this->config->migration_directory}', "
+                . "aucun fichier de migration n'a été créé. "
+                . "Créez-en un avec la commande 'provider' (ex. : migrate provider "
+                . ($this->config->provider !== '' ? $this->config->provider : 'sqlite') . ")."
+            );
         }
         return $list;
     }

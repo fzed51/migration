@@ -41,12 +41,10 @@ class NewCommand extends AbstractConfigCommand
 
 <comment>Sortie :</comment>
   Une ligne par fichier créé : " Création du fichier '<fichier>' pour <provider>'".
-  Si aucun dossier provider n'existe, un avertissement "Attention aucun répertoire n'existe
-  pour le provider ..." est affiché, AUCUN fichier n'est créé et le code de retour reste 0 :
-  vérifier la sortie.
 
 <comment>Erreurs fréquentes :</comment>
-  - "Attention aucun répertoire n'existe pour le provider" : lancer <info>migrate provider <provider></info>.
+  - "Aucun dossier provider n'existe" : aucun fichier créé, code de retour différent de 0.
+    Lancer <info>migrate provider <provider></info> puis relancer la commande.
   - "Impossible de trouver le fichier de configuration" : lancer d'abord <info>migrate init</info>.
 
 <comment>Format d'un fichier de migration :</comment>

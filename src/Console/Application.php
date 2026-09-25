@@ -51,13 +51,12 @@ class Application extends BaseApplication
 Outil de migration de base de données (MySQL, SQLite, PostgreSQL) à partir de fichiers SQL.
 
 <comment>Workflow :</comment>
-  1. <info>migrate init</info>              crée ./migration-config.json
-  2. éditer la configuration   migration_directory + connexion (config_intern)
-  3. créer le dossier migration_directory
-  4. <info>migrate provider sqlite</info>   crée <migration_directory>/sqlite/
-  5. <info>migrate new create_user</info>   crée YYYYMMDD-NN-create_user.sql
-  6. écrire le SQL             requêtes séparées par une ligne "---"
-  7. <info>migrate run</info>               applique les migrations en attente
+  1. <info>migrate init</info>              crée ./migration-config.json et ./db/migration/
+  2. éditer la configuration   connexion (config_intern)
+  3. <info>migrate provider sqlite</info>   crée <migration_directory>/sqlite/
+  4. <info>migrate new create_user</info>   crée YYYYMMDD-NN-create_user.sql
+  5. écrire le SQL             requêtes séparées par une ligne "---"
+  6. <info>migrate run</info>               applique les migrations en attente
 
 <comment>Effets de bord :</comment>
   - list, help, init, provider, new : ne contactent pas la base.

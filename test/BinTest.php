@@ -43,9 +43,23 @@ class BinTest extends DbTestCase
     {
         $this->deleteConfigFile();
         $this->deleteDbFile();
-        $tester = $this->runMigrate(['command' => 'init']);
-        self::assertSame(0, $tester->getStatusCode());
-        self::assertFileExists(self::CONFIGFILE);
+        $createdDirectories = array_filter(
+            ['./db', MigrationInit::MIGRATION_DIRECTORY],
+            static fn(string $dir): bool => !is_dir($dir)
+        );
+        try {
+            $tester = $this->runMigrate(['command' => 'init']);
+            self::assertSame(0, $tester->getStatusCode());
+            self::assertFileExists(self::CONFIGFILE);
+            self::assertDirectoryExists(MigrationInit::MIGRATION_DIRECTORY);
+        } finally {
+            // supprime uniquement les dossiers créés par le test, du plus profond au plus haut
+            foreach (array_reverse($createdDirectories) as $dir) {
+                if (is_dir($dir)) {
+                    rmdir($dir);
+                }
+            }
+        }
     }
 
     /**
@@ -123,6 +137,19 @@ class BinTest extends DbTestCase
             array_map('unlink', glob($providerDirectory . '/*.sql') ?: []);
             rmdir($providerDirectory);
         }
+    }
+
+    /**
+     * new échoue si aucun dossier provider n'existe
+     */
+    public function testCreateNewMigrationFailsWithoutProviderDirectory(): void
+    {
+        $this->putMigrationConfigFile();
+        self::assertSame([], glob(__DIR__ . '/migration/*', GLOB_ONLYDIR) ?: []);
+        $tester = $this->runMigrate(['command' => 'new', 'name' => 'create_user']);
+        self::assertNotSame(0, $tester->getStatusCode());
+        self::assertMatchesRegularExpression("/Aucun dossier provider n'existe/", $tester->getErrorOutput());
+        self::assertSame([], glob(__DIR__ . '/migration/*/*.sql') ?: []);
     }
 
     /**

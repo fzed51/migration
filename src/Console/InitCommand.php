@@ -26,24 +26,25 @@ class InitCommand extends AbstractConfigCommand
     - migration_directory : "./db/migration"
     - config_intern : connexion décrite directement dans le JSON
     - config_extern : connexion lue depuis un fichier PHP du projet
-  Le dossier migration_directory n'est PAS créé.
+  Crée aussi le dossier ./db/migration (relatif au répertoire courant) s'il n'existe pas.
 
 <comment>Préconditions :</comment>
   Aucune. La base de données n'est pas contactée.
 
 <comment>Idempotence :</comment>
-  Non : la commande échoue si le fichier existe déjà (il n'est jamais écrasé).
+  Non : la commande échoue si le fichier existe déjà (il n'est jamais écrasé, et le
+  dossier de migration n'est alors pas créé).
 
 <comment>Sortie :</comment>
-  Une ligne confirmant le chemin du fichier créé.
+  Deux lignes : le chemin du fichier de configuration et celui du dossier de migration.
 
 <comment>Erreurs fréquentes :</comment>
   - "ce fichier existe déjà" : la configuration est déjà initialisée, éditez-la.
+  - "Impossible de créer le dossier de migration" : droits d'écriture insuffisants.
 
 <comment>Étapes suivantes :</comment>
-  1. Renseigner migration_directory et config_intern (provider, name, ...) dans le fichier.
-  2. Créer le dossier migration_directory.
-  3. <info>migrate provider <provider></info>
+  1. Renseigner config_intern (provider, name, ...) dans le fichier.
+  2. <info>migrate provider <provider></info>
 
 <comment>Exemples :</comment>
   <info>%command.full_name%</info>
@@ -56,6 +57,7 @@ TXT . self::HELP_CONVENTIONS);
         $configPath = $this->getConfigPath($input);
         (new MigrationInit($configPath))->run();
         $output->writeln("Fichier de configuration '$configPath' créé.");
+        $output->writeln("Dossier de migration '" . MigrationInit::MIGRATION_DIRECTORY . "' prêt.");
         return self::SUCCESS;
     }
 }
