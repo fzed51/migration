@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e85984e1fecfc49c3ce272dd049d57df",
+    "content-hash": "7d89d93cb572fa4073a4e8ecfd0c43b5",
     "packages": [
         {
             "name": "fzed51/console-options",
@@ -2021,11 +2021,11 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.1",
+        "php": "^8.2",
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
