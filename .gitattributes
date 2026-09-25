@@ -1,0 +1,8 @@
+# Fins de ligne normalisées en LF (PSR-2), quel que soit core.autocrlf
+* text=auto eol=lf
+
+# Scripts Windows
+*.bat text eol=crlf
+
+# Binaires
+*.sqlite binary
