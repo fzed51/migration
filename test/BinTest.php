@@ -212,6 +212,19 @@ class BinTest extends DbTestCase
     }
 
     /**
+     * --help sans commande respecte --format
+     */
+    public function testHelpWithoutCommandKeepsFormat(): void
+    {
+        $tester = $this->runMigrate(['--help' => true, '--format' => 'json']);
+        self::assertSame(0, $tester->getStatusCode());
+        $data = json_decode($tester->getDisplay(), true);
+        self::assertIsArray($data);
+        self::assertSame(Application::NAME, $data['application']['name'] ?? null);
+        self::assertContains('run', array_column($data['commands'] ?? [], 'name'));
+    }
+
+    /**
      * chaque commande documente ses effets pour un humain ou un agent
      */
     public function testEachCommandHasStructuredHelp(): void
@@ -232,16 +245,39 @@ class BinTest extends DbTestCase
      */
     public function testBinaryReturnsExitCode(): void
     {
+        [$exitCode, $stdout] = $this->runBinary(['--version', '--no-ansi']);
+        self::assertSame(0, $exitCode);
+        self::assertStringStartsWith('migrate ', $stdout);
+    }
+
+    /**
+     * "--format json" (valeur séparée par un espace) n'est pas pris pour un nom de commande
+     */
+    public function testBinaryHelpWithSeparatedFormatValue(): void
+    {
+        [$exitCode, $stdout] = $this->runBinary(['--help', '--format', 'json']);
+        self::assertSame(0, $exitCode);
+        $data = json_decode($stdout, true);
+        self::assertIsArray($data);
+        self::assertContains('run', array_column($data['commands'] ?? [], 'name'));
+    }
+
+    /**
+     * lance le vrai binaire
+     * @param string[] $arguments
+     * @return array{int, string} code de retour et stdout
+     */
+    protected function runBinary(array $arguments): array
+    {
         $process = proc_open(
-            [PHP_BINARY, $this->cmd, '--version', '--no-ansi'],
+            array_merge([PHP_BINARY, $this->cmd], $arguments),
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes
         );
         self::assertIsResource($process);
-        $stdout = stream_get_contents($pipes[1]);
+        $stdout = (string)stream_get_contents($pipes[1]);
         fclose($pipes[1]);
         fclose($pipes[2]);
-        self::assertSame(0, proc_close($process));
-        self::assertStringStartsWith('migrate ', (string)$stdout);
+        return [proc_close($process), $stdout];
     }
 }

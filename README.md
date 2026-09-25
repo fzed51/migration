@@ -209,6 +209,7 @@ Règles à suivre pour piloter l'outil automatiquement :
 1. **Découvrir sans risque** : `migrate` et `migrate list` ne modifient rien. Une description lisible par une machine est disponible :
    ```shell
    ./vendor/bin/migrate list --format=json    # commandes, arguments, options et aides
+                                              # (équivalent : migrate --help --format=json)
    ./vendor/bin/migrate help run --format=md  # aide d'une commande en Markdown
    ```
 2. **Lancer en mode non interactif et sans couleurs** : `--no-interaction --no-ansi`.

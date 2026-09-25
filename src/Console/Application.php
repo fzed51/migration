@@ -73,13 +73,27 @@ TXT;
     }
 
     /**
-     * "migrate --help" sans commande affiche la vue d'ensemble plutôt que l'aide de "list"
+     * "migrate --help" sans commande affiche la vue d'ensemble plutôt que l'aide de "list",
+     * en respectant --format et --raw (ex. "migrate --help --format=json")
      */
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
         $wantsHelp = $input->hasParameterOption(['--help', '-h'], true);
-        if ($wantsHelp && $input->getFirstArgument() === null) {
-            $input = new ArrayInput(['command' => 'list']);
+        $format = $input->getParameterOption('--format', false, true);
+        $hasFormat = is_string($format) && $format !== '';
+        $firstArgument = $input->getFirstArgument();
+        // "--format json" : la valeur de l'option n'est pas un nom de commande
+        $noCommand = $firstArgument === null || ($hasFormat && $firstArgument === $format);
+        if ($noCommand && ($wantsHelp || $hasFormat)) {
+            // conserve les options de rendu de "list" (ex. --format=json, --raw)
+            $listInput = ['command' => 'list'];
+            if ($hasFormat) {
+                $listInput['--format'] = $format;
+            }
+            if ($input->hasParameterOption('--raw', true)) {
+                $listInput['--raw'] = true;
+            }
+            $input = new ArrayInput($listInput);
         }
         return parent::doRun($input, $output);
     }
