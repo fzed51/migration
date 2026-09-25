@@ -17,7 +17,7 @@ jobs:
     name: Lint (validate, phpcs, phpstan)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -25,7 +25,7 @@ jobs:
           extensions: json, mbstring, pdo, pdo_sqlite
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - run: composer lint
 
@@ -43,7 +43,7 @@ jobs:
           - php: '8.5'
             dependencies: highest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -51,7 +51,7 @@ jobs:
           extensions: json, mbstring, pdo, pdo_sqlite
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
