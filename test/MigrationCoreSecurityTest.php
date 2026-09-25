@@ -146,6 +146,44 @@ class MigrationCoreSecurityTest extends PHPUnitTestCase
     }
 
     // -------------------------------------------------------------------------
+    // #7 — Connexion externe avec un PDO::ATTR_CASE quelconque
+    // -------------------------------------------------------------------------
+
+    #[DataProvider('pdoCases')]
+    public function testRerunWorksWhateverPdoAttrCase(int $case): void
+    {
+        assert($this->tmpDir !== null);
+        $path = $this->createSqlFile('SELECT 1');
+        $pdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_CASE => $case,
+        ]);
+        $core = (new MigrationCore())
+            ->setPdo($pdo)
+            ->setProvider('sqlite')
+            ->setMigrationDirectory($this->tmpDir);
+        $this->runSilent($core);
+        // Deuxième run : l'historique doit être lu quelle que soit la casse des clés
+        $this->runSilent($core);
+
+        // Le contrôle du checksum doit lui aussi fonctionner
+        file_put_contents($path, 'SELECT 2');
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/Intégrité compromise/');
+        $core->run();
+    }
+
+    /** @return array<string, array{int}> */
+    public static function pdoCases(): array
+    {
+        return [
+            'natural' => [PDO::CASE_NATURAL],
+            'lower'   => [PDO::CASE_LOWER],
+            'upper'   => [PDO::CASE_UPPER],
+        ];
+    }
+
+    // -------------------------------------------------------------------------
     // Nettoyage des commentaires SQL
     // -------------------------------------------------------------------------
 
