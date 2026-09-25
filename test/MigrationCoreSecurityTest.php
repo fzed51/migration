@@ -6,6 +6,7 @@ namespace Migration;
 use Helper\PDOFactory;
 use InvalidArgumentException;
 use PDO;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 use RuntimeException;
 
@@ -91,7 +92,7 @@ class MigrationCoreSecurityTest extends PHPUnitTestCase
         $this->makeCore()->setProvider('');
     }
 
-    /** @dataProvider validProviders */
+    #[DataProvider('validProviders')]
     public function testAcceptsValidProvider(string $provider): void
     {
         $core = $this->makeCore()->setProvider($provider);
