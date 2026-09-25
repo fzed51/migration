@@ -16,7 +16,7 @@
     "ext-mbstring": "*",
     "ext-pdo": "*",
     "fzed51/pdo-helper": "^2.0",
-    "fzed51/console-options": "^2.0"
+    "symfony/console": "^7.4 || ^8.0"
   },
   "bin": [
     "./bin/migrate"

@@ -1,13 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-use Console\Options\Option;
-use Console\Options\OptionParser;
-use Migration\CreateMigration;
-use Migration\CreateProviderDirectory;
-use Migration\Migration;
-use Migration\MigrationConfigFile;
-use Migration\MigrationInit;
+use Migration\Console\Application;
 
 if (getenv('APP_ENV') === 'development') {
     ini_set('display_errors', 'On');
@@ -27,51 +21,4 @@ if (is_file('../../../vendor/autoload.php')) {
     throw new RuntimeException("Imposible de trouver l'autoload de composer");
 }
 
-try {
-    $options = new OptionParser([
-        (new Option('config_file', 'c'))
-            ->setType(Option::T_STRING)
-            ->setDefault('./migration-config.json'),
-        (new Option('new', 'n'))
-            ->setType(Option::T_STRING),
-        (new Option('provider', 'p'))
-            ->setType(Option::T_STRING),
-        (new Option('init', 'i'))
-            ->setType(Option::T_FLAG)
-    ]);
-    $options->parse($argv);
-
-    if ($options['init']) {
-        $init = new MigrationInit($options['config_file']);
-        $init->run();
-    } else {
-        if (isset($options['config_file'])) {
-            $config_filename = realpath($options['config_file']);
-        } elseif (isset($options[0])) {
-            $config_filename = realpath($options[0]);
-        } else {
-            $config_filename = false;
-        }
-        if ($config_filename === false) {
-            throw new RuntimeException(
-                'Impossible de trouver le fichier de configuration '
-                . $options['config_file']
-            );
-        }
-        $config = new MigrationConfigFile($config_filename);
-        if(isset($options['provider'])){
-            $providerDirectory = new CreateProviderDirectory($config);
-            $providerDirectory->setProvider($options['provider']);
-            $providerDirectory->run();
-        } elseif (isset($options['new'])) {
-            $newMigration = new CreateMigration($config);
-            $newMigration->setNewMigrationName($options['new']);
-            $newMigration->run();
-        } else {
-            $migration = new Migration($config);
-            $migration->run();
-        }
-    }
-} catch (Throwable $t) {
-    echo $t->getMessage() . PHP_EOL;
-}
+exit((new Application())->run());
