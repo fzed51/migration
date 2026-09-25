@@ -46,3 +46,10 @@ This is a CLI tool for running SQL database migrations, published as a Composer 
 - PHP 8.2+, strict types, PSR-2 style
 - Comments and error messages are in French
 - PHPStan level 6 — maintain type coverage
+- Record every user-visible change in `CHANGELOG.md` (Keep a Changelog, in French); breaking changes also go in the README section "Migration depuis la v2"
+
+## CI and releases
+
+- `.github/workflows/ci.yml`: `composer lint` on PHP 8.2, `composer test` on PHP 8.2 → 8.5 with the lock, plus the newest PHP with `highest` dependencies. Add each new PHP version to the matrix.
+- `composer.lock` must stay installable on PHP 8.2 (the lowest supported version).
+- Release: date the version in `CHANGELOG.md` and its compare link, merge to `main`, then tag `vX.Y.Z` on `main` and publish the GitHub release (Packagist picks up the tag).

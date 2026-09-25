@@ -1,5 +1,10 @@
 # migration
 
+[![CI](https://github.com/fzed51/migration/actions/workflows/ci.yml/badge.svg)](https://github.com/fzed51/migration/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/packagist/v/fzed51/migration)](https://packagist.org/packages/fzed51/migration)
+[![PHP](https://img.shields.io/packagist/dependency-v/fzed51/migration/php)](composer.json)
+[![Licence](https://img.shields.io/packagist/l/fzed51/migration)](LICENSE)
+
 `migration` est un outil en ligne de commande qui applique des migrations de structure de base de données écrites en **SQL pur**. Il n'y a pas de DSL à apprendre : vous décrivez la connexion dans un fichier JSON, écrivez vos scripts SQL, puis lancez `migrate run`.
 
 Bases supportées : **MySQL**, **SQLite**, **PostgreSQL**.
@@ -16,6 +21,7 @@ Cette documentation s'adresse aux humains comme aux **agents** (IA, scripts, CI)
 - [Utilisation par un agent ou en CI](#utilisation-par-un-agent-ou-en-ci)
 - [Migration depuis la v2](#migration-depuis-la-v2)
 - [Développement](#développement)
+- [Changelog, sécurité et licence](#changelog-sécurité-et-licence)
 
 ## Prérequis
 
@@ -28,7 +34,7 @@ Cette documentation s'adresse aux humains comme aux **agents** (IA, scripts, CI)
 composer require fzed51/migration
 ```
 
-Le binaire est installé dans `./vendor/bin/migrate`.
+Le binaire est installé dans `./vendor/bin/migrate` (sous Windows : `vendor\bin\migrate.bat`). Les exemples de cette documentation l'appellent simplement `migrate`.
 
 ## Démarrage rapide
 
@@ -202,6 +208,12 @@ L'historique est conservé dans la table `migration_story` (colonnes `file`, `co
 
 Aucune commande ne pose de question interactive.
 
+Par défaut, les erreurs PHP (warnings, notices) ne sont pas affichées mais envoyées au journal d'erreurs de PHP. Pour les afficher pendant un diagnostic, lancez la commande avec `APP_ENV=development` :
+
+```shell
+APP_ENV=development ./vendor/bin/migrate run -v
+```
+
 ## Utilisation par un agent ou en CI
 
 Règles à suivre pour piloter l'outil automatiquement :
@@ -226,7 +238,15 @@ Check-list avant `migrate run` :
 
 ## Migration depuis la v2
 
-La v3 remplace les options par des sous-commandes (CLI basée sur `symfony/console`) :
+La v3 remplace les options par des sous-commandes (CLI basée sur `symfony/console`) et demande PHP 8.2 ou supérieur. La liste complète des changements est dans le [CHANGELOG](CHANGELOG.md).
+
+Étapes de mise à jour :
+
+1. Passez à PHP 8.2 ou supérieur si besoin.
+2. Mettez à jour la dépendance : `composer require fzed51/migration:^3.0`.
+3. Remplacez les appels dans vos scripts, votre CI et votre documentation à l'aide du tableau ci-dessous. Attention : **`migrate` seul n'applique plus les migrations**, utilisez `migrate run`.
+4. Si vous utilisez `config_extern`, vérifiez que le fichier PHP est dans le répertoire du fichier de configuration (ou un sous-dossier).
+5. Lancez `migrate run` sur une base de test : si un fichier déjà appliqué a été modifié depuis, la commande s'arrête sur « Intégrité compromise ».
 
 | v2 | v3 |
 |---|---|
@@ -236,11 +256,13 @@ La v3 remplace les options par des sous-commandes (CLI basée sur `symfony/conso
 | `migrate -p <provider>` | `migrate provider <provider>` |
 | `migrate -c <fichier>` / `-config_file <fichier>` | `-c <fichier>` / `--config=<fichier>` |
 
-Autres changements :
+Autres changements de comportement :
 
 - en cas d'erreur, le code de retour est différent de 0, et le message est écrit sur stderr ;
 - `init` crée aussi le dossier `./db/migration` ;
 - `new` échoue quand aucun dossier provider n'existe (la v2 affichait seulement un avertissement) ;
+- `run` vérifie le checksum des fichiers déjà appliqués ;
+- `config_extern.file` doit être un fichier `.php` placé sous le répertoire du fichier de configuration ;
 - `--help` et `--version` sont disponibles.
 
 ## Développement
@@ -249,3 +271,10 @@ Autres changements :
 composer lint   # composer validate + phpcs (PSR-2) + phpstan (niveau 6)
 composer test   # phpunit
 ```
+
+La CI GitHub Actions lance `composer lint`, puis `composer test` sur chaque version de PHP supportée (8.2 à 8.5), ainsi qu'avec les dépendances les plus récentes autorisées par `composer.json`.
+
+## Changelog, sécurité et licence
+
+- Historique des versions : [CHANGELOG.md](CHANGELOG.md).
+- Audit de sécurité et correctifs : [SECURITY_REPORT.md](SECURITY_REPORT.md).- Licence : [MIT](LICENSE).

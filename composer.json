@@ -1,7 +1,9 @@
 {
   "name": "fzed51/migration",
-  "description": "Outil de migration de base de donnée",
+  "description": "Outil en ligne de commande de migration de base de données en SQL pur (MySQL, SQLite, PostgreSQL)",
   "type": "library",
+  "keywords": ["migration", "database", "sql", "cli", "mysql", "sqlite", "postgresql"],
+  "homepage": "https://github.com/fzed51/migration",
   "license": "MIT",
   "authors": [
     {
@@ -17,6 +19,15 @@
     "ext-pdo": "*",
     "fzed51/pdo-helper": "^2.0",
     "symfony/console": "^7.4 || ^8.0"
+  },
+  "suggest": {
+    "ext-pdo_mysql": "pour les bases MySQL",
+    "ext-pdo_pgsql": "pour les bases PostgreSQL",
+    "ext-pdo_sqlite": "pour les bases SQLite"
+  },
+  "support": {
+    "issues": "https://github.com/fzed51/migration/issues",
+    "source": "https://github.com/fzed51/migration"
   },
   "bin": [
     "./bin/migrate"

@@ -4,7 +4,7 @@ Toutes les évolutions notables de ce projet sont consignées dans ce fichier.
 
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
-## [Non publié] - 3.0.0
+## [3.0.0] - 2026-09-25
 
 Version majeure : la CLI passe en sous-commandes et PHP 8.2 devient le minimum. Voir la section « Migration depuis la v2 » du [README](README.md#migration-depuis-la-v2).
 
@@ -35,6 +35,8 @@ Version majeure : la CLI passe en sous-commandes et PHP 8.2 devient le minimum. 
 - Description lisible par une machine : `migrate list --format=json` (ou `migrate --help --format=json`) et `migrate help <commande> --format=md`.
 - Options `--help`, `--version`, `--quiet`, `--verbose`, `--no-ansi` et `--no-interaction`.
 - README réécrit : démarrage rapide, configuration, usage par un agent ou en CI, guide de migration depuis la v2.
+- CI GitHub Actions : lint, puis tests sur PHP 8.2 à 8.5 et avec les dépendances les plus récentes.
+- Fichier `LICENSE` (MIT, licence déjà déclarée dans `composer.json`) et métadonnées Packagist (mots-clés, extensions PDO suggérées).
 
 ### Corrections
 
@@ -55,5 +57,5 @@ Version majeure : la CLI passe en sous-commandes et PHP 8.2 devient le minimum. 
 
 Dernière version de la v2. Les versions antérieures ne sont pas détaillées ici : voir l'historique git et les tags.
 
-[Non publié]: https://github.com/fzed51/migration/compare/v2.0.0...HEAD
+[3.0.0]: https://github.com/fzed51/migration/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/fzed51/migration/releases/tag/v2.0.0
