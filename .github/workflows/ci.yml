@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (validate, phpcs, phpstan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: json, mbstring, pdo, pdo_sqlite
+          coverage: none
+
+      - uses: ramsey/composer-install@v4
+
+      - run: composer lint
+
+  test:
+    name: Tests PHP ${{ matrix.php }} (${{ matrix.dependencies }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # toutes les versions de PHP supportées (composer.json : ^8.2)
+        php: ['8.2', '8.3', '8.4', '8.5']
+        dependencies: [locked]
+        include:
+          # dépendances les plus récentes autorisées par composer.json (ex. symfony/console 8.x)
+          - php: '8.5'
+            dependencies: highest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json, mbstring, pdo, pdo_sqlite
+          coverage: none
+
+      - uses: ramsey/composer-install@v4
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      - run: composer test
