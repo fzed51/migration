@@ -30,6 +30,8 @@ Cette documentation s'adresse aux humains comme aux **agents** (IA, scripts, CI)
 
 ## Installation
 
+Le paquet est publié sur Packagist : <https://packagist.org/packages/fzed51/migration>.
+
 ```shell
 composer require fzed51/migration
 ```
