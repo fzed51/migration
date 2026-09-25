@@ -244,7 +244,8 @@ class MigrationCore
         $content = file_get_contents($filename);
         $checksum = sha1_file($filename);
         $stm = $this->pdo->prepare('INSERT INTO migration_story (file, content, checksum) VALUES (?, ?, ?)');
-        $stm->execute([self::cleanDirectorySeparator($file), $content, $checksum]);
+        $file = self::cleanDirectorySeparator($file);
+        $stm->execute([$file, $content, $checksum]);
         echo "migration : $file" . PHP_EOL;
     }
 

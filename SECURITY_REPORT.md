@@ -6,6 +6,8 @@
 **Analyseur** : Audit manuel + PHPStan level 6 + PHPUnit  
 **Statut des tests** : 8/8 ✅ — `composer lint` ✅
 
+> **Revue v3.0.0 (2026-09-25)** : le passage à `symfony/console` et les nouvelles commandes (`init`, `provider`, `new`, `run`) ont été revus. Aucune nouvelle faille : les entrées `provider` et `new` restent filtrées (liste blanche, `cleanName()`), le chargement de la configuration et de `config_extern` est inchangé. Le correctif SEC-06 (`APP_ENV`) est conservé dans `bin/migrate`.
+
 ---
 
 ## Résumé exécutif

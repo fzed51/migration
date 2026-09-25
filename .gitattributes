@@ -6,3 +6,13 @@
 
 # Binaires
 *.sqlite binary
+
+# Exclus de l'archive installée par Composer (--prefer-dist)
+/.github            export-ignore
+/test               export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/CLAUDE.md          export-ignore
+/phpcs.xml          export-ignore
+/phpstan.neon       export-ignore
+/phpunit.xml        export-ignore
