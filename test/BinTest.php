@@ -32,8 +32,23 @@ class BinTest extends DbTestCase
         $application = new Application();
         $application->setAutoExit(false);
         $tester = new ApplicationTester($application);
-        $tester->run($input, ['capture_stderr_separately' => true, 'decorated' => false]);
+        // terminal large : Symfony coupe les messages d'erreur à la largeur du terminal (80 en CI)
+        $columns = getenv('COLUMNS');
+        putenv('COLUMNS=1000');
+        try {
+            $tester->run($input, ['capture_stderr_separately' => true, 'decorated' => false]);
+        } finally {
+            putenv($columns === false ? 'COLUMNS' : "COLUMNS=$columns");
+        }
         return $tester;
+    }
+
+    /**
+     * sortie d'erreur sur une seule ligne : Symfony la coupe à la largeur du terminal
+     */
+    protected function errorOutput(ApplicationTester $tester): string
+    {
+        return trim((string)preg_replace('/\s+/', ' ', $tester->getErrorOutput()));
     }
 
     /**
@@ -70,7 +85,7 @@ class BinTest extends DbTestCase
         $this->putMigrationConfigFile();
         $tester = $this->runMigrate(['command' => 'init']);
         self::assertNotSame(0, $tester->getStatusCode());
-        self::assertMatchesRegularExpression('/existe déjà/', $tester->getErrorOutput());
+        self::assertMatchesRegularExpression('/existe déjà/', $this->errorOutput($tester));
     }
 
     /**
@@ -84,7 +99,7 @@ class BinTest extends DbTestCase
         self::assertNotSame(0, $tester->getStatusCode());
         self::assertMatchesRegularExpression(
             "/Impossible de trouver le fichier de configuration \.\/migration-config\.json/",
-            $tester->getErrorOutput()
+            $this->errorOutput($tester)
         );
     }
 
@@ -99,7 +114,7 @@ class BinTest extends DbTestCase
         self::assertNotSame(0, $tester->getStatusCode());
         self::assertMatchesRegularExpression(
             "/Le fichier \.\/data.sqlite n'a pas été trouvé!/",
-            $tester->getErrorOutput()
+            $this->errorOutput($tester)
         );
     }
 
@@ -165,7 +180,7 @@ class BinTest extends DbTestCase
         self::assertSame([], glob(__DIR__ . '/migration/*', GLOB_ONLYDIR) ?: []);
         $tester = $this->runMigrate(['command' => 'new', 'name' => 'create_user']);
         self::assertNotSame(0, $tester->getStatusCode());
-        self::assertMatchesRegularExpression("/Aucun dossier provider n'existe/", $tester->getErrorOutput());
+        self::assertMatchesRegularExpression("/Aucun dossier provider n'existe/", $this->errorOutput($tester));
         self::assertSame([], glob(__DIR__ . '/migration/*/*.sql') ?: []);
     }
 
