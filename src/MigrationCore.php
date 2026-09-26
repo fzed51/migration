@@ -1,4 +1,6 @@
-<?php /** @noinspection SqlNoDataSourceInspection */
+<?php
+
+/** @noinspection SqlNoDataSourceInspection */
 
 namespace Migration;
 
@@ -74,7 +76,7 @@ class MigrationCore
         }
         // normalise la casse des clés : la connexion injectée via setPdo() peut avoir n'importe quel PDO::ATTR_CASE
         $this->story = array_map(
-            static fn(array $row): array => array_change_key_case($row, CASE_UPPER),
+            static fn (array $row): array => array_change_key_case($row, CASE_UPPER),
             $stm->fetchAll(PDO::FETCH_ASSOC)
         );
     }

@@ -270,7 +270,8 @@ Autres changements de comportement :
 ## Développement
 
 ```shell
-composer lint   # composer validate + phpcs (PSR-2) + phpstan (niveau 6)
+composer lint   # composer validate + php-cs-fixer (PSR-12) + phpstan (niveau 6)
+composer fix    # corrige le style (PSR-12)
 composer test   # phpunit
 ```
 

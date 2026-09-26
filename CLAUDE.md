@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-composer lint    # validate + phpcs (PSR-2) + phpstan (level 6)
+composer lint    # validate + php-cs-fixer check (PSR-12) + phpstan (level 6)
+composer fix     # php-cs-fixer fix (reformate src/ et test/)
 composer test    # phpunit
 ```
 
@@ -39,11 +40,11 @@ This is a CLI tool for running SQL database migrations, published as a Composer 
 
 **Testing**: `DbTestCase` uses SQLite via `PDOFactory::sqlite()`. `BinTest` runs CLI integration tests through `ApplicationTester` (symfony/console) (plus one smoke test spawning `bin/migrate`).
 
-**PDOFactory column casing**: `PDOFactory` sets `PDO::ATTR_CASE = PDO::CASE_UPPER` on every connection it creates (MySQL, SQLite, PostgreSQL). All column names fetched via `fetchAll(PDO::FETCH_ASSOC)` are therefore **uppercase** — e.g. `migration_story.file` is accessed as `$row['FILE']`, `checksum` as `$row['CHECKSUM']`. This is intentional; never lowercase these keys when reading rows returned by `PDOFactory`-managed connections.
+**PDO column casing**: `fzed51/pdo-helper` 3 defaults to `PDO::CASE_LOWER`, so `Migration::PDO_ATTRIBUTES` (and the test helpers) pass `PDO::ATTR_CASE => PDO::CASE_UPPER` explicitly to every `PDOFactory` call (MySQL, SQLite, PostgreSQL). All column names fetched via `fetchAll(PDO::FETCH_ASSOC)` are therefore **uppercase** — e.g. `migration_story.file` is accessed as `$row['FILE']`, `checksum` as `$row['CHECKSUM']`. This is intentional; never lowercase these keys when reading rows returned by these connections, and keep passing the attribute on any new `PDOFactory` call.
 
 ## Code conventions
 
-- PHP 8.2+, strict types, PSR-2 style
+- PHP 8.2+, strict types, PSR-12 style (PHP-CS-Fixer, `.php-cs-fixer.dist.php`, same config as `fzed51/pdo-helper`)
 - Comments and error messages are in French
 - PHPStan level 6 — maintain type coverage
 - Record every user-visible change in `CHANGELOG.md` (Keep a Changelog, in French); breaking changes also go in the README section "Migration depuis la v2"

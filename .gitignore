@@ -82,3 +82,4 @@ Desktop.ini
 /migration-config.json
 
 *.local.*
+.php-cs-fixer.cache

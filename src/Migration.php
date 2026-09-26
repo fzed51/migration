@@ -3,6 +3,7 @@
 namespace Migration;
 
 use Helper\PDOFactory;
+use PDO;
 
 /**
  * Class Migration
@@ -10,6 +11,12 @@ use Helper\PDOFactory;
  */
 class Migration extends MigrationCore
 {
+    /**
+     * Attributs PDO de la connexion : noms de colonnes en majuscules
+     * (fzed51/pdo-helper 3 utilise CASE_LOWER par défaut)
+     */
+    private const PDO_ATTRIBUTES = [PDO::ATTR_CASE => PDO::CASE_UPPER];
+
     /**
      * propriété contenant la config
      * @var MigrationConfig
@@ -51,12 +58,13 @@ class Migration extends MigrationCore
                     $this->config->host,
                     $this->config->name,
                     $this->config->user,
-                    $this->config->pass
+                    $this->config->pass,
+                    attributes: self::PDO_ATTRIBUTES
                 ));
                 break;
             case 'sqlite':
                 $this->setProvider($this->config->provider);
-                $this->setPdo(PDOFactory::sqlite($this->config->name));
+                $this->setPdo(PDOFactory::sqlite($this->config->name, self::PDO_ATTRIBUTES));
                 break;
             case 'postgres':
             case 'postgresql':
@@ -66,7 +74,8 @@ class Migration extends MigrationCore
                     $this->config->host,
                     $this->config->user,
                     $this->config->pass,
-                    $this->config->port
+                    $this->config->port,
+                    self::PDO_ATTRIBUTES
                 ));
                 break;
             default:

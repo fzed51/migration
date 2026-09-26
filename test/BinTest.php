@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Migration;
@@ -60,7 +61,7 @@ class BinTest extends DbTestCase
         $this->deleteDbFile();
         $createdDirectories = array_filter(
             ['./db', MigrationInit::MIGRATION_DIRECTORY],
-            static fn(string $dir): bool => !is_dir($dir)
+            static fn (string $dir): bool => !is_dir($dir)
         );
         try {
             $tester = $this->runMigrate(['command' => 'init']);

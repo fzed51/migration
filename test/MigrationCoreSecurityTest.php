@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Migration;
@@ -23,7 +24,7 @@ class MigrationCoreSecurityTest extends PHPUnitTestCase
         parent::setUp();
         $this->tmpDir = sys_get_temp_dir() . '/migration_sec_test_' . uniqid('', true);
         mkdir($this->tmpDir . '/sqlite', 0755, true);
-        $this->pdo = PDOFactory::sqlite();
+        $this->pdo = PDOFactory::sqlite(':memory:', [PDO::ATTR_CASE => PDO::CASE_UPPER]);
     }
 
     protected function tearDown(): void
