@@ -6,6 +6,8 @@ Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) 
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-26
+
 ### Modifié
 
 - Dépendance `fzed51/pdo-helper` passée en `^3.0` (au lieu de `^2.0`). Les connexions gardent les noms de colonnes en majuscules (`PDO::CASE_UPPER`), désormais demandés explicitement.
@@ -64,6 +66,7 @@ Version majeure : la CLI passe en sous-commandes et PHP 8.2 devient le minimum. 
 
 Dernière version de la v2. Les versions antérieures ne sont pas détaillées ici : voir l'historique git et les tags.
 
-[Unreleased]: https://github.com/fzed51/migration/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/fzed51/migration/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/fzed51/migration/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/fzed51/migration/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/fzed51/migration/releases/tag/v2.0.0
