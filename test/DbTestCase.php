@@ -31,7 +31,7 @@ class DbTestCase extends TestCase
             if (!is_file(self::DBFILE)) {
                 $this->createEmptyDbFile();
             }
-            $this->pdo = PDOFactory::sqlite(self::DBFILE);
+            $this->pdo = PDOFactory::sqlite(self::DBFILE, [PDO::ATTR_CASE => PDO::CASE_UPPER]);
         }
         return $this->pdo;
     }

@@ -18,7 +18,6 @@ use Throwable;
  */
 class MigrationConfigFile extends MigrationConfig
 {
-
     /**
      * config du fichier
      * @var array<string,mixed>

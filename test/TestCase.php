@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 class TestCase extends PHPUnitTestCase
 {
-
     protected const CONFIGFILE = "./migration-config.json";
 
     protected function tearDown(): void
@@ -22,7 +21,7 @@ class TestCase extends PHPUnitTestCase
         }
     }
 
-    protected function createMigrationDirectory() :void
+    protected function createMigrationDirectory(): void
     {
         if (is_file(self::CONFIGFILE)) {
             $config = json_decode(
