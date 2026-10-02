@@ -59,7 +59,9 @@ class Migration extends MigrationCore
                     $this->config->name,
                     $this->config->user,
                     $this->config->pass,
-                    attributes: self::PDO_ATTRIBUTES
+                    $this->port(3306),
+                    'utf8mb4',
+                    self::PDO_ATTRIBUTES
                 ));
                 break;
             case 'sqlite':
@@ -74,12 +76,21 @@ class Migration extends MigrationCore
                     $this->config->host,
                     $this->config->user,
                     $this->config->pass,
-                    $this->config->port,
+                    $this->port(5432),
                     self::PDO_ATTRIBUTES
                 ));
                 break;
             default:
                 throw new \RuntimeException("Le provider {$this->config->provider} est inconnue!");
         }
+    }
+
+    /**
+     * Port de connexion : celui de la config, ou le port par défaut du provider
+     * si la config n'en donne pas (0)
+     */
+    private function port(int $default): int
+    {
+        return $this->config->port > 0 ? $this->config->port : $default;
     }
 }

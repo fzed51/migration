@@ -6,6 +6,12 @@ Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) 
 
 ## [Unreleased]
 
+### Corrigé
+
+- MySQL : le port de la configuration (`port`) est désormais transmis à la connexion ; il était ignoré et 3306 s'appliquait toujours.
+- MySQL : la connexion s'ouvre en `utf8mb4` au lieu de `utf8` (alias de `utf8mb3`, limité aux caractères sur 3 octets : pas d'emoji, par exemple).
+- Un port absent ou à `0` utilise le port par défaut du provider (3306 pour MySQL, 5432 pour PostgreSQL) au lieu d'être transmis tel quel.
+
 ## [3.1.0] - 2026-09-26
 
 ### Modifié

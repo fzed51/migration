@@ -143,7 +143,7 @@ Le fichier de configuration est un JSON (1 Mo maximum) :
 | `migration_directory` | Dossier des migrations. Il doit exister et contient un sous-dossier par provider. |
 | `config_intern.provider` | `mysql`, `sqlite`, `postgres` ou `postgresql` |
 | `config_intern.host` | Hôte du serveur (MySQL, PostgreSQL) |
-| `config_intern.port` | Port, en **entier** (PostgreSQL) |
+| `config_intern.port` | Port, en **entier** ; `0` ou absent : port par défaut (3306 MySQL, 5432 PostgreSQL) |
 | `config_intern.name` | Nom de la base, ou chemin du fichier pour SQLite |
 | `config_intern.user` / `pass` | Identifiants (MySQL, PostgreSQL) |
 
