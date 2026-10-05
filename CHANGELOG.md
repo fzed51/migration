@@ -6,6 +6,8 @@ Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) 
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-10-05
+
 ### Corrigé
 
 - MySQL : le port de la configuration (`port`) est désormais transmis à la connexion ; il était ignoré et 3306 s'appliquait toujours.
@@ -72,7 +74,8 @@ Version majeure : la CLI passe en sous-commandes et PHP 8.2 devient le minimum. 
 
 Dernière version de la v2. Les versions antérieures ne sont pas détaillées ici : voir l'historique git et les tags.
 
-[Unreleased]: https://github.com/fzed51/migration/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/fzed51/migration/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/fzed51/migration/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/fzed51/migration/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/fzed51/migration/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/fzed51/migration/releases/tag/v2.0.0
